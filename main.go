@@ -1,7 +1,8 @@
 package main
 
 import (
-	"fmt"
+	"log"
+	"os"
 
 	"github.com/hiabhi-cpu/rssagg/internal/config"
 	"github.com/joho/godotenv"
@@ -9,23 +10,48 @@ import (
 
 func main() {
 	godotenv.Load(".env")
-	con, err := config.ReadConfig()
+	cfg, err := config.ReadConfig()
+	// fmt.Println(os.UserHomeDir())
 	if err != nil {
 		println("Error in reading the file", err)
 		return
 	}
-	fmt.Println(con)
-	err = con.SetUser("abhi")
-	if err != nil {
-		println("Error in setting user in file", err)
+
+	programState := &state{
+		con: &cfg,
+	}
+
+	cmds := commands{
+		registerCommands: make(map[string]func(*state, Command) error),
+	}
+
+	cmds.Register("login", handlerLogin)
+
+	if len(os.Args) < 2 {
+		log.Fatal("Usage: cli <command> [args...]")
 		return
 	}
-	con, err = config.ReadConfig()
+
+	cmdName := os.Args[1]
+	cmdArgs := os.Args[2:]
+	// fmt.Println(programState)
+	err = cmds.Run(programState, Command{Name: cmdName, Args: cmdArgs})
 	if err != nil {
-		println("Error in reading the file", err)
-		return
+		log.Fatal(err)
 	}
-	fmt.Println(con)
+
+	// fmt.Println(con)
+	// err = con.SetUser("abhi")
+	// if err != nil {
+	// 	println("Error in setting user in file", err)
+	// 	return
+	// }
+	// con, err = config.ReadConfig()
+	// if err != nil {
+	// 	println("Error in reading the file", err)
+	// 	return
+	// }
+	// fmt.Println(con)
 	// port := os.Getenv("PORT") //getting port from os
 	// if port == "" {
 	// 	log.Fatal("No port present")

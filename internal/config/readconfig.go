@@ -35,7 +35,13 @@ func getReadData(file string) (string, error) {
 
 func ReadConfig() (Config, error) {
 	// fmt.Println(os.UserHomeDir())
-	jsonData, err := getReadData("gatorconfig.json")
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return Config{}, err
+	}
+	path := fmt.Sprint(home, "/.gatorconfig.json")
+	// fmt.Println(path)
+	jsonData, err := getReadData(path)
 	if err != nil {
 		return Config{}, fmt.Errorf("Error in reading the file", err)
 	}
