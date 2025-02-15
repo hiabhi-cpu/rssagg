@@ -6,12 +6,6 @@ import (
 	"os"
 )
 
-// func check(e error) {
-// 	if e != nil {
-// 		panic(e)
-// 	}
-// }
-
 func getReadData(file string) (string, error) {
 	dat, err := os.ReadFile(file)
 	if err != nil {

@@ -1,11 +1,15 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"os"
 
 	"github.com/hiabhi-cpu/rssagg/internal/config"
+	"github.com/hiabhi-cpu/rssagg/internal/database"
 	"github.com/joho/godotenv"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -20,12 +24,19 @@ func main() {
 	programState := &state{
 		con: &cfg,
 	}
+	db, err := sql.Open("postgres", cfg.Db_url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	dbQueries := database.New(db)
+	programState.db = dbQueries
 
 	cmds := commands{
 		registerCommands: make(map[string]func(*state, Command) error),
 	}
 
 	cmds.Register("login", handlerLogin)
+	cmds.Register("register", handlerRegister)
 
 	if len(os.Args) < 2 {
 		log.Fatal("Usage: cli <command> [args...]")
