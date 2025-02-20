@@ -47,6 +47,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const deleteAll = `-- name: DeleteAll :exec
+DELETE FROM users
+`
+
+func (q *Queries) DeleteAll(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteAll)
+	return err
+}
+
 const getUser = `-- name: GetUser :one
 SELECT id, created_at, updated_at, user_name FROM users WHERE user_name LIKE $1 LIMIT 1
 `
@@ -61,4 +70,48 @@ func (q *Queries) GetUser(ctx context.Context, userName string) (User, error) {
 		&i.UserName,
 	)
 	return i, err
+}
+
+const getUserById = `-- name: GetUserById :one
+SELECT id, created_at, updated_at, user_name FROM users WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserById, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UserName,
+	)
+	return i, err
+}
+
+const listUsers = `-- name: ListUsers :many
+SELECT user_name from users
+ORDER BY user_name
+`
+
+func (q *Queries) ListUsers(ctx context.Context) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var user_name string
+		if err := rows.Scan(&user_name); err != nil {
+			return nil, err
+		}
+		items = append(items, user_name)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
